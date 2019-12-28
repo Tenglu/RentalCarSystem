@@ -1,9 +1,14 @@
 package com.example.rentalCar.model;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class ResultBean {
-    Order order;
-    String result;
-    String errorMsg;
+    
+    private Order order;
+    private String result;
+    private String errorMsg;
+    
     public Order getOrder() {
         return order;
     }

@@ -12,4 +12,9 @@ public class RentCarConstants {
     public static final String ERRORMSG_NO_ORDER="There is no such order in system.";
     public static final String ERRORMSG_ORDER_ALREADY_CONFIRM="The order is already in confirm status.";
     public static final String ERRORMSG_ORDER_ALREADY_CANCELLED="The order is already in cancelled/draft status.";
+
+    public static final String ORDER_DATE_INVALID="Date is invalid, please input a valid date.";
+    public static final String ORDER_LOCATION_INVALID="Location is invalid, please input a valid location.";
+    public static final String ORDER_USERID_INVALID="User id is invalid, please input a valid user id.";
+
 }

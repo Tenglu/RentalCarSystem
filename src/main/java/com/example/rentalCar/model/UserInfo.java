@@ -1,5 +1,8 @@
 package com.example.rentalCar.model;
 
+import org.springframework.stereotype.Component;
+
+
 public class UserInfo {
     
     private int userId;

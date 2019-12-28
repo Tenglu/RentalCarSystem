@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.rentalCar.model.Cars;
@@ -23,9 +24,12 @@ import com.example.rentalCar.service.constants.RentCarConstants;
 @Service
 public class RentCarServiceImpl implements RentCarService {
 
-	List<Cars> cars;
-	List <UserInfo> userList;
-	List <Order> orderList;
+	private List<Cars> cars;
+	private List <UserInfo> userList;
+	private List <Order> orderList;
+	
+	@Autowired
+	private ResultBean resultBean;
 	
 	public RentCarServiceImpl () {
 		cars=new ArrayList<Cars>();
@@ -52,51 +56,44 @@ public class RentCarServiceImpl implements RentCarService {
 		    userInfo.setUserId(userId);
 		    userList.add(userInfo);
 		}
-	    Order order=new Order(userId,startDate,endDate);
+	    Order order=new Order(userId,startDate,endDate,location);
 	    if(!orderList.contains(order)) {
 	        order.setOrderId(order.generateOrderId());
 	        orderList.add(order);
+	        userInfo.setOrderId(order.getOrderId());
 	    }
-        System.out.println("2 order id:"+order.getOrderId());
 	    map.put("orderId", order.getOrderId());
 	    map.put("carList", cars);
 		return map;
 	}
 
 	@Override
-	public ResultBean getReservationInfo(int orderId,int carId) {
-	    ResultBean result=new ResultBean();
+	public ResultBean reserveCar(int orderId,int carId) {
 	    Order order=orderList.stream().
 				filter(o -> o.getOrderId()==orderId).findAny().orElse(null);
 		if(order==null) {		    
-		    result.setErrorMsg(RentCarConstants.ERRORMSG_NO_ORDER);
-            result.setResult(RentCarConstants.RESULT_FAILURE);	
+		    resultBean.setErrorMsg(RentCarConstants.ERRORMSG_NO_ORDER);
+		    resultBean.setResult(RentCarConstants.RESULT_FAILURE);	
 		}else if(order.getOrderStatus().equals(RentCarConstants.ORDER_STATE_CONFIRM)){
-		    result.setErrorMsg(RentCarConstants.ERRORMSG_ORDER_ALREADY_CONFIRM);
-            result.setResult(RentCarConstants.RESULT_FAILURE);
-		}else if(!checkAvailable(carId)) {
-		    result.setErrorMsg(RentCarConstants.ERRORMSG_NO_CAR);
-            result.setResult(RentCarConstants.RESULT_FAILURE);
+		    resultBean.setErrorMsg(RentCarConstants.ERRORMSG_ORDER_ALREADY_CONFIRM);
+		    resultBean.setResult(RentCarConstants.RESULT_FAILURE);
+		}else if(!checkStockNumber(carId,orderId)) {
+		    resultBean.setErrorMsg(RentCarConstants.ERRORMSG_NO_CAR);
+		    resultBean.setResult(RentCarConstants.RESULT_FAILURE);
+		}else if(!order.CheckOrderValidation().equals("")) {
+		    resultBean.setErrorMsg(order.CheckOrderValidation());
+		    resultBean.setResult(RentCarConstants.RESULT_FAILURE);
 		}else {
-            result.setResult(RentCarConstants.RESULT_SUCCESS);
+		    order.setCarId(carId);
+		    resultBean.setResult(RentCarConstants.RESULT_SUCCESS);
+            resultBean.setErrorMsg("");
             order.setOrderStatus(RentCarConstants.ORDER_STATE_CONFIRM);
 		}
 		
-		result.setOrder(order);
+		resultBean.setOrder(order);
 		
-		return result;
+		return resultBean;
 	}
-	
-	public boolean checkAvailable(int carId) {
-	    Cars car=cars.stream().filter(c -> c.getId()==carId).findAny().get();
-	    if(car==null) {
-	        return false;
-	    }else if(car.getInStockNumber()<=0) {
-	        return false;
-	    }
-	    return true;
-	}
-
 
 	@Override
 	public List<UserInfo> getAllUsersInfo() {
@@ -104,30 +101,33 @@ public class RentCarServiceImpl implements RentCarService {
 	}
 
     @Override
-    public UserInfo getOrderInfo(int userId) {
-        return userList.stream().
-                filter(userList -> userList.getUserId()==userId).findAny().orElse(null);
+    public Order getOrderInfo(int userId) {
+         return userList.stream().
+                filter(user -> user.getUserId()==userId).map(user -> orderList.stream().filter(o ->o.getOrderId()==user.getOrderId()).findAny().orElse(null)).findAny().orElse(null);
     }
 
 
     @Override
     public ResultBean cancelOrder(int orderId) {
-        ResultBean result=new ResultBean();
+
         Order order=orderList.stream().
-                filter(o -> o.getOrderId()==orderId).findAny().get();
+                filter(o -> o.getOrderId()==orderId).findAny().orElse(null);
         if(order==null) {
-            result.setErrorMsg(RentCarConstants.ERRORMSG_NO_ORDER);
-            result.setResult(RentCarConstants.RESULT_FAILURE);
+            resultBean.setErrorMsg(RentCarConstants.ERRORMSG_NO_ORDER);
+            resultBean.setResult(RentCarConstants.RESULT_FAILURE);
         }else if(order.getOrderStatus().equals(RentCarConstants.ORDER_STATE_CANCEL)||order.getOrderStatus().equals(RentCarConstants.ORDER_STATE_DRAFT)) {
-            result.setErrorMsg(RentCarConstants.ERRORMSG_ORDER_ALREADY_CANCELLED);
-            result.setResult(RentCarConstants.RESULT_FAILURE);
+            resultBean.setErrorMsg(RentCarConstants.ERRORMSG_ORDER_ALREADY_CANCELLED);
+            resultBean.setResult(RentCarConstants.RESULT_FAILURE);
         }else {
-            result.setResult(RentCarConstants.RESULT_SUCCESS);
+            resultBean.setResult(RentCarConstants.RESULT_SUCCESS);
+            resultBean.setErrorMsg("");
+            order.setOrderStatus(RentCarConstants.ORDER_STATE_CANCEL);
         }
-        result.setOrder(order);
-        return result;
+        resultBean.setOrder(order);
+        return resultBean;
     }
         
+    
     @Override
     public List<Cars> getStockInfo() {
         return cars;
@@ -139,6 +139,61 @@ public class RentCarServiceImpl implements RentCarService {
         Date strtodate = formatter.parse(strDate, pos);
         return strtodate;
      }
+
+
+
+    @Override
+    public ResultBean updateOrderInfo(int orderId, String location, String startDate, String endDate,int carId) {
+        Order order=orderList.stream().
+                filter(o -> o.getOrderId()==orderId).findAny().orElse(null);
+        if(order==null) {
+            resultBean.setErrorMsg(RentCarConstants.ERRORMSG_NO_ORDER);
+            resultBean.setResult(RentCarConstants.RESULT_FAILURE);
+        }else if(order.getOrderStatus().equals(RentCarConstants.ORDER_STATE_CONFIRM)) {
+            resultBean.setErrorMsg(RentCarConstants.ERRORMSG_ORDER_ALREADY_CONFIRM);
+            resultBean.setResult(RentCarConstants.RESULT_FAILURE);
+        }else { 
+            if(location!=null) {
+                order.setLocation(location);
+            }
+            if(startDate!=null) {
+                order.setStartDate(strToDate(startDate));
+            }
+            if(endDate!=null) {
+                order.setEndDate(strToDate(endDate));
+            }
+            if(carId!=0) {
+                resultBean=reserveCar(orderId,carId);
+            }
+        }
+
+        return resultBean;
+    }
+    
+    public Boolean checkStockNumber(int carId, int orderId) { 
+        Cars car=cars.stream().filter(c -> c.getId()==carId).findAny().orElse(null);
+        if(car==null) {
+            return false;
+        }
+        Order order=orderList.stream().filter(o -> o.getOrderId()==orderId).findAny().orElse(null);
+        int totalNumber=car.getInStockNumber();
+
+        for(Order eachOrder :orderList) {            
+            if(eachOrder.getOrderStatus().equals(RentCarConstants.ORDER_STATE_CONFIRM)&&eachOrder.getCarId()==carId) {
+
+                if(order.getStartDate().before(eachOrder.getEndDate())||order.getStartDate().equals(eachOrder.getEndDate())&&order.getStartDate().after(eachOrder.getStartDate())||order.getStartDate().equals(eachOrder.getStartDate())){
+
+                    totalNumber--;
+                }else if(order.getEndDate().before(eachOrder.getEndDate())||order.getEndDate().equals(eachOrder.getEndDate())&&order.getEndDate().after(eachOrder.getStartDate())||order.getEndDate().equals(eachOrder.getStartDate())){
+                    totalNumber--;
+                }
+                if(totalNumber<=0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
 
 }

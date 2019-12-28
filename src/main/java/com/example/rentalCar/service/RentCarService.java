@@ -13,13 +13,16 @@ public interface RentCarService {
 
 	public Map<String,Object> getAvailableCarsInfo(int userId, String location,String startDate,String endDate);
 
-	public ResultBean getReservationInfo(int orderId,int carId);
+	public ResultBean reserveCar(int orderId,int carId);
 
+	public ResultBean updateOrderInfo(int orderId, String location,String startDate,String endDate, int carId );
+	
 	public List<UserInfo> getAllUsersInfo();
 	
-	public UserInfo getOrderInfo(int userId);
+	public Order getOrderInfo(int userId);
 	
 	public ResultBean cancelOrder(int orderId);
 	
 	public List<Cars> getStockInfo();
+	
 }

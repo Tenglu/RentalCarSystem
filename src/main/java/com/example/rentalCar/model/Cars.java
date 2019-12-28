@@ -1,4 +1,6 @@
 package com.example.rentalCar.model;
+import org.springframework.stereotype.Component;
+
 
 public class Cars {
     
@@ -8,6 +10,7 @@ public class Cars {
 	
 	private int inStockNumber;
 	
+
 	public Cars(int id,String carModelName, int inStockNumber) {
 		this.id=id;
 		this.carModelName=carModelName;
@@ -34,5 +37,6 @@ public class Cars {
 	public void setId(int id) {
 		this.id = id;
 	}
+
 
 }
