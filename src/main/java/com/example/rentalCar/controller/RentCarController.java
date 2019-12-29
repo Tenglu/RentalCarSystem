@@ -23,16 +23,16 @@ public class RentCarController {
 	private RentCarService rentCarService;
     
 	@ApiOperation(value = "Input booking location and reserve time, return all the available cars in stock")
-    @RequestMapping(value="/location", method = RequestMethod.GET, produces = "application/json")
-    public Map<String,Object> rentLocation(@RequestParam int userId, @RequestParam String location, @RequestParam String startDate, @RequestParam String endDate) {
+    @RequestMapping(value="/queryCars", method = RequestMethod.GET, produces = "application/json")
+    public List<Cars> queryCars(@RequestParam String location, @RequestParam String startDate, @RequestParam String endDate) {
 	    
-    	return rentCarService.getAvailableCarsInfo(userId,location,startDate,endDate);
+    	return rentCarService.queryCars(location,startDate,endDate);
     }
     
 	@ApiOperation(value = "Select the car and return if the order is confirmed")
-    @RequestMapping(value="/reservation", method = RequestMethod.GET, produces = "application/json")
-    public ResultBean reserveCar(@RequestParam int orderId,@RequestParam int carId) {
-		return rentCarService.reserveCar(orderId,carId);
+    @RequestMapping(value="/reserveCar", method = RequestMethod.GET, produces = "application/json")
+    public ResultBean reserveCar(@RequestParam int userId, @RequestParam String location, @RequestParam String startDate, @RequestParam String endDate, @RequestParam int carId) {
+		return rentCarService.reserveCar(userId, location, startDate, endDate, carId);
     }
 
 	@ApiOperation(value = "Input order id to cancel order")
@@ -43,31 +43,17 @@ public class RentCarController {
  
 	@ApiOperation(value = "Input user id to get user's related order information")
 	@RequestMapping(value="/getOrderInfo", method = RequestMethod.GET, produces = "application/json")
-    public Order getOrderInfo(@RequestParam int userId){
+    public List<Order> getOrderInfo(@RequestParam int userId){
 	    
-        return rentCarService.getOrderInfo(userId);
+        return rentCarService.getUserOrders(userId);
     }
 	
 	@ApiOperation(value = "Input order id and to get user's related order information")
     @RequestMapping(value="/updateOrderInfo", method = RequestMethod.GET, produces = "application/json")
-    public ResultBean updateOrderInfo(@RequestParam int orderId, @RequestParam String location, @RequestParam String startDate, @RequestParam String endDate, @RequestParam int carId){
+    public ResultBean updateOrderInfo(@RequestParam int orderId, @RequestParam(required=false) String location, @RequestParam(required=false) String startDate, @RequestParam(required=false) String endDate, @RequestParam(required=false) int carId){
         
         return rentCarService.updateOrderInfo(orderId,location,startDate,endDate,carId);
     }
-	
-	@ApiOperation(value = "Check available cars in stock")
-	@RequestMapping(value="/getStockInfo", method = RequestMethod.GET, produces = "application/json")
-    public List<Cars> getStockInfo(){
-        return rentCarService.getStockInfo();
-    }
-	
-	@RequestMapping(value="/getAllUsersInfo", method = RequestMethod.GET, produces = "application/json")
-	public List<UserInfo> getAllUsersInfo(){
-		return rentCarService.getAllUsersInfo();
-	}
-     
-	 
-	 
-  
+
 
 }

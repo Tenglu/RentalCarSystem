@@ -18,12 +18,14 @@ public class Order {
     private String orderStatus;
     private String location;
     
-    public Order(int userId, Date startDate,Date endDate, String location) {
+    public Order(int userId, Date startDate,Date endDate, String location,int carId) {
         this.userId=userId;
         this.startDate=startDate;
         this.endDate=endDate;
         this.location=location;
+        this.carId=carId;
         this.orderStatus=RentCarConstants.ORDER_STATE_DRAFT;
+        this.orderId=generateOrderId();
     }
     
     public Date getStartDate() {

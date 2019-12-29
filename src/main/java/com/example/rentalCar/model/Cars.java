@@ -1,4 +1,7 @@
 package com.example.rentalCar.model;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 
@@ -10,8 +13,21 @@ public class Cars {
 	
 	private int inStockNumber;
 	
+	private List<Order> relatedOrders;
 
-	public Cars(int id,String carModelName, int inStockNumber) {
+	public Cars() {
+	    relatedOrders=new ArrayList<Order>();
+	}
+	
+	public List<Order> getRelatedOrders() {
+        return relatedOrders;
+    }
+
+    public void addOrder(Order relatedComfirmedOrders) {
+        this.relatedOrders.add(relatedComfirmedOrders);
+    }
+    
+    public Cars(int id,String carModelName, int inStockNumber) {
 		this.id=id;
 		this.carModelName=carModelName;
 		this.inStockNumber=inStockNumber;

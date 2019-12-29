@@ -17,4 +17,5 @@ public class RentCarConstants {
     public static final String ORDER_LOCATION_INVALID="Location is invalid, please input a valid location.";
     public static final String ORDER_USERID_INVALID="User id is invalid, please input a valid user id.";
 
+    public static final String ORDER_DUPLICATE="You already have an confirmed order.";
 }

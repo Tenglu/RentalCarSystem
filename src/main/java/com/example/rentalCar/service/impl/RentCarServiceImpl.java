@@ -1,5 +1,7 @@
 package com.example.rentalCar.service.impl;
 
+import static org.mockito.Mockito.mockingDetails;
+
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -8,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,67 +47,60 @@ public class RentCarServiceImpl implements RentCarService {
 	
 	
 	@Override
-	public Map<String,Object> getAvailableCarsInfo(int userId, String location,String startDateStr,String endDateStr) {
-	    Map<String,Object> map=new HashMap<String,Object>();
-	    
+	public List<Cars> queryCars(String location,String startDateStr,String endDateStr) {	    
 	    Date startDate=strToDate(startDateStr);
 	    Date endDate=strToDate(endDateStr);
 	    
-	    UserInfo userInfo=userList.stream().
-				filter(userList -> userList.getUserId()==userId).findAny().orElseGet(() -> new UserInfo());	    
-		
-	    if(!userList.contains(userInfo)) {
-		    userInfo.setUserId(userId);
-		    userList.add(userInfo);
-		}
-	    Order order=new Order(userId,startDate,endDate,location);
-	    if(!orderList.contains(order)) {
-	        order.setOrderId(order.generateOrderId());
-	        orderList.add(order);
-	        userInfo.setOrderId(order.getOrderId());
-	    }
-	    map.put("orderId", order.getOrderId());
-	    map.put("carList", cars);
-		return map;
+	   List<Cars> availableCars=cars.stream().filter(car-> checkStockNumber(car.getId(),startDate,endDate)>0).collect(Collectors.toList());
+	   availableCars.stream().forEach(e -> e.setInStockNumber(checkStockNumber(e.getId(),startDate,endDate)));
+
+		return availableCars;
 	}
 
 	@Override
-	public ResultBean reserveCar(int orderId,int carId) {
-	    Order order=orderList.stream().
-				filter(o -> o.getOrderId()==orderId).findAny().orElse(null);
-		if(order==null) {		    
-		    resultBean.setErrorMsg(RentCarConstants.ERRORMSG_NO_ORDER);
-		    resultBean.setResult(RentCarConstants.RESULT_FAILURE);	
-		}else if(order.getOrderStatus().equals(RentCarConstants.ORDER_STATE_CONFIRM)){
+	public ResultBean reserveCar(int userId, String location,String startDateStr,String endDateStr,int carId) {
+	    Date startDate=strToDate(startDateStr);
+	    Date endDate=strToDate(endDateStr);
+	    UserInfo userInfo=userList.stream().
+              filter(userList -> userList.getUserId()==userId).findAny().orElseGet(() -> new UserInfo());     
+	    if(!userList.contains(userInfo)) {
+	        userInfo.setUserId(userId);
+	        userList.add(userInfo);
+	    }
+      
+	    Order order=new Order(userId,startDate,endDate,location,carId);
+	    orderList.add(order);
+	    userInfo.setOrderId(order.getOrderId());
+    
+	    if(order.getOrderStatus().equals(RentCarConstants.ORDER_STATE_CONFIRM)){
 		    resultBean.setErrorMsg(RentCarConstants.ERRORMSG_ORDER_ALREADY_CONFIRM);
 		    resultBean.setResult(RentCarConstants.RESULT_FAILURE);
-		}else if(!checkStockNumber(carId,orderId)) {
+	    }else if(checkStockNumber(carId,startDate,endDate)<=0) {
 		    resultBean.setErrorMsg(RentCarConstants.ERRORMSG_NO_CAR);
 		    resultBean.setResult(RentCarConstants.RESULT_FAILURE);
-		}else if(!order.CheckOrderValidation().equals("")) {
+	    }else if(!order.CheckOrderValidation().equals("")) {
 		    resultBean.setErrorMsg(order.CheckOrderValidation());
 		    resultBean.setResult(RentCarConstants.RESULT_FAILURE);
-		}else {
-		    order.setCarId(carId);
+	    }else {
 		    resultBean.setResult(RentCarConstants.RESULT_SUCCESS);
             resultBean.setErrorMsg("");
             order.setOrderStatus(RentCarConstants.ORDER_STATE_CONFIRM);
-		}
+	    }
 		
-		resultBean.setOrder(order);
+	    resultBean.setOrder(order);
 		
-		return resultBean;
-	}
-
-	@Override
-	public List<UserInfo> getAllUsersInfo() {
-		return userList;
+	return resultBean;
 	}
 
     @Override
-    public Order getOrderInfo(int userId) {
-         return userList.stream().
-                filter(user -> user.getUserId()==userId).map(user -> orderList.stream().filter(o ->o.getOrderId()==user.getOrderId()).findAny().orElse(null)).findAny().orElse(null);
+    public List<Order> getUserOrders(int userId) {
+        UserInfo user= userList.stream().filter(u -> u.getUserId()==userId).findAny().orElse(null);
+        if(user==null) {
+            return null;
+        }
+        return user.getOrderIdList().stream().map(orderId -> orderList.stream().filter(o -> o.getOrderId()==orderId).findAny().orElse(null)).collect(Collectors.toList());
+        
+        
     }
 
 
@@ -125,13 +122,7 @@ public class RentCarServiceImpl implements RentCarService {
         }
         resultBean.setOrder(order);
         return resultBean;
-    }
-        
-    
-    @Override
-    public List<Cars> getStockInfo() {
-        return cars;
-    }
+    }  
 
     public static Date strToDate(String strDate) {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
@@ -163,36 +154,36 @@ public class RentCarServiceImpl implements RentCarService {
                 order.setEndDate(strToDate(endDate));
             }
             if(carId!=0) {
-                resultBean=reserveCar(orderId,carId);
+                resultBean=reserveCar(order.getUserId(), location, startDate, endDate, carId);
             }
         }
 
         return resultBean;
     }
+
     
-    public Boolean checkStockNumber(int carId, int orderId) { 
+    public int checkStockNumber(int carId,Date startDate,Date endDate) { 
         Cars car=cars.stream().filter(c -> c.getId()==carId).findAny().orElse(null);
         if(car==null) {
-            return false;
+            return 0;
         }
-        Order order=orderList.stream().filter(o -> o.getOrderId()==orderId).findAny().orElse(null);
         int totalNumber=car.getInStockNumber();
 
         for(Order eachOrder :orderList) {            
             if(eachOrder.getOrderStatus().equals(RentCarConstants.ORDER_STATE_CONFIRM)&&eachOrder.getCarId()==carId) {
 
-                if(order.getStartDate().before(eachOrder.getEndDate())||order.getStartDate().equals(eachOrder.getEndDate())&&order.getStartDate().after(eachOrder.getStartDate())||order.getStartDate().equals(eachOrder.getStartDate())){
+                if(startDate.before(eachOrder.getEndDate())||startDate.equals(eachOrder.getEndDate())&&startDate.after(eachOrder.getStartDate())||startDate.equals(eachOrder.getStartDate())){
 
                     totalNumber--;
-                }else if(order.getEndDate().before(eachOrder.getEndDate())||order.getEndDate().equals(eachOrder.getEndDate())&&order.getEndDate().after(eachOrder.getStartDate())||order.getEndDate().equals(eachOrder.getStartDate())){
+                }else if(endDate.before(eachOrder.getEndDate())||endDate.equals(eachOrder.getEndDate())&&endDate.after(eachOrder.getStartDate())||endDate.equals(eachOrder.getStartDate())){
                     totalNumber--;
                 }
                 if(totalNumber<=0) {
-                    return false;
+                    return 0;
                 }
             }
         }
-        return true;
+        return totalNumber;
     }
 
 
