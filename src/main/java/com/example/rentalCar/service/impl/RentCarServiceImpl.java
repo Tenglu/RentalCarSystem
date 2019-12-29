@@ -2,12 +2,14 @@ package com.example.rentalCar.service.impl;
 
 import static org.mockito.Mockito.mockingDetails;
 
+import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collector;
@@ -125,16 +127,22 @@ public class RentCarServiceImpl implements RentCarService {
     }  
 
     public static Date strToDate(String strDate) {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        ParsePosition pos = new ParsePosition(0);
-        Date strtodate = formatter.parse(strDate, pos);
-        return strtodate;
+        System.out.println(strDate);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        System.out.println(sdf);
+        try {
+            System.out.println(sdf.parse(strDate));
+            return sdf.parse(strDate);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
      }
 
 
 
     @Override
-    public ResultBean updateOrderInfo(int orderId, String location, String startDate, String endDate,int carId) {
+    public ResultBean updateOrder(int orderId, String location, String startDate, String endDate,int carId) {
         Order order=orderList.stream().
                 filter(o -> o.getOrderId()==orderId).findAny().orElse(null);
         if(order==null) {

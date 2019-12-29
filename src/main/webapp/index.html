@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"> 
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js">
+</script>
+<script>
+$(document).ready(function(){
+const queryCarUrl='/queryCars';
+const reserveCarUrl='/reserveCar';
+const cancelOrderUrl='/cancelOrder';
+const updateOrderUrl='/updateOrder';
+const retrieveOrderUrl='/retrieveOrder';
+
+  $(".btn").click(function(){
+	  var location=document.getElementById("location").value;
+	  var startDate=document.getElementById("startDate").value;
+	  var endDate=document.getElementById("endDate").value;
+	  var queryCarData = {
+	  		"location": location,
+	  		"startDate": startDate,
+	  		"endDate": endDate
+	  	};
+	    
+	$.ajax({
+		url:queryCarUrl,
+		type:"GET",
+		data:queryCarData,
+		success:function(result){
+			console.log(result);
+			var obj= eval(result);
+			document.getElementById("result").innerHTML="";
+			for(var o in obj){
+				document.getElementById("result").innerHTML+="Car Id: "+obj[o].id+"&nbsp&nbsp&nbsp&nbsp";
+				document.getElementById("result").innerHTML+="Car Model Name: "+obj[o].carModelName+"&nbsp&nbsp&nbsp&nbsp";
+				document.getElementById("result").innerHTML+="Number in Stock: "+obj[o].inStockNumber+"&nbsp&nbsp&nbsp&nbsp";
+				document.getElementById("result").innerHTML+="<br>";
+			}
+			
+		}
+	})
+  })
+  
+  
+  
+  
+
+  $(".btn2").click(function(){
+	  var location2=document.getElementById("location2").value;
+	  var startDate2=document.getElementById("startDate2").value;
+	  var endDate2=document.getElementById("endDate2").value;
+	  var carId2=document.getElementById("carId2").value;
+	  var userId2=document.getElementById("userId2").value;
+	  var reserveCarUrlData = {
+	  		"userId": userId2,
+	  		"location": location2,
+	  		"startDate": startDate2,
+	  		"endDate": endDate2,
+	  		"carId": carId2
+	  		
+	  	};
+	$.ajax({
+		url:reserveCarUrl,
+		type:"GET",
+		data:reserveCarUrlData,
+		success:function(result){
+			console.log(result);
+			var obj= eval(result);
+			document.getElementById("result2").innerHTML="";
+			document.getElementById("result2").innerHTML+="Order Id: "+obj.order.orderId+"&nbsp&nbsp&nbsp&nbsp";
+			document.getElementById("result2").innerHTML+="Result: "+obj.result+"&nbsp&nbsp&nbsp&nbsp";
+			document.getElementById("result2").innerHTML+=obj.errorMsg+"&nbsp&nbsp&nbsp&nbsp";
+			document.getElementById("result2").innerHTML+="<br>";
+		
+			
+		}
+	})
+  })
+  
+  
+    $(".btn3").click(function(){
+	  var orderId3=document.getElementById("orderId3").value;
+
+	  var cancelOrderUrlData = {
+	  		"orderId": orderId3,
+
+	  		
+	  	};
+	$.ajax({
+		url:cancelOrderUrl,
+		type:"GET",
+		data:cancelOrderUrlData,
+		success:function(result){
+			console.log(result);
+			var obj= eval(result);
+			document.getElementById("result3").innerHTML="";
+			document.getElementById("result3").innerHTML+="Result: "+obj.result+"&nbsp&nbsp&nbsp&nbsp ";
+			document.getElementById("result3").innerHTML+=obj.errorMsg+"&nbsp&nbsp&nbsp&nbsp ";
+			document.getElementById("result3").innerHTML+="<br>";
+			
+		}
+	})
+  })
+  
+  
+  $(".btn4").click(function(){
+	  var orderId4=document.getElementById("orderId4").value;
+	  var location4=document.getElementById("location4").value;
+	  var startDate4=document.getElementById("startDate4").value;
+	  var endDate4=document.getElementById("endDate4").value;
+	  var carId4=document.getElementById("carId4").value;
+
+	  var updateOrderUrlData = {
+	  		"orderId": orderId4,
+	  		"location": location4,
+	  		"startDate": startDate4,
+	  		"endDate": endDate4,
+	  		"carId": carId4
+	  		
+	  	};
+	$.ajax({
+		url:updateOrderUrl,
+		type:"GET",
+		data:updateOrderUrlData,
+		success:function(result){
+			console.log(result);
+			var obj= eval(result);
+			document.getElementById("result4").innerHTML="";
+			document.getElementById("result4").innerHTML+="Result: "+obj.result+"&nbsp&nbsp&nbsp&nbsp ";
+			document.getElementById("result4").innerHTML+=obj.errorMsg+"&nbsp&nbsp&nbsp&nbsp ";
+			document.getElementById("result4").innerHTML+="<br>";
+			
+		}
+	})
+  })
+  
+  $(".btn5").click(function(){
+	  var userId5=document.getElementById("userId5").value;
+
+
+	  var retrieveOrderUrlData = {
+	  		"userId": userId5,
+
+	  		
+	  	};
+	$.ajax({
+		url:retrieveOrderUrl,
+		type:"GET",
+		data:retrieveOrderUrlData,
+		success:function(result){
+			console.log(result);
+			var obj= eval(result);
+			document.getElementById("result5").innerHTML="";
+			for(var o in obj){
+				document.getElementById("result5").innerHTML+="Car Id: "+obj[o].carId+" ";
+				document.getElementById("result5").innerHTML+="Order Id: "+obj[o].orderId+" ";
+				document.getElementById("result5").innerHTML+="Start Date: "+obj[o].startDate+" ";
+				document.getElementById("result5").innerHTML+="End Date: "+obj[o].endDate+" ";
+				document.getElementById("result5").innerHTML+="Location: "+obj[o].location+" ";
+				document.getElementById("result5").innerHTML+="Order Status: "+obj[o].orderStatus+" ";
+				document.getElementById("result5").innerHTML+="<br>";
+			}
+		}
+	})
+  })
+});
+
+</script>
+</head>
+<body>
+<h1> Query Car: </h1>
+<form>
+	Location:<input type="text" name="location" id="location"/>
+	StartDate:<input type="text" name="startDate"  id="startDate" />
+	EndDate:<input type="text" name="endDate"  id="endDate" />
+	<input type="button" id="btn" class="btn" value="Submit"></>
+
+</form>
+<div id="result" style="height:100px"></div>
+
+<h1> Reserve Car: </h1>
+<form>
+	UserId:<input type="number" name="userId2" id="userId2"/>
+	Location:<input type="text" name="location2" id="location2"/>
+	StartDate:<input type="text" name="startDate2"  id="startDate2" />
+	EndDate:<input type="text" name="endDate2"  id="endDate2" />
+	carId:<input type="number" name="carId2" id="carId2"/>
+	<input type="button" id="btn2" class="btn2" value="Submit"></>
+
+</form>
+<div id="result2" style="height:100px"></div>
+
+<h1> Cancel Order: </h1>
+<form>
+	orderId:<input type="number" name="orderId3" id="orderId3"/>
+	
+	<input type="button" id="btn3" class="btn3" value="Submit"></>
+
+</form>
+<div id="result3" style="height:100px"></div>
+
+
+<h1> Update Order: </h1>
+<form>
+	orderId:<input type="number" name="orderId4" id="orderId4"/>
+	Location:<input type="text" name="location4" id="location4"/>
+	StartDate:<input type="text" name="startDate4"  id="startDate4" />
+	EndDate:<input type="text" name="endDate4"  id="endDate4" />
+	carId:<input type="number" name="carId4" id="carId4"/>
+	<input type="button" id="btn4" class="btn4" value="Submit"></>
+
+</form>
+<div id="result4" style="height:100px"></div>
+
+<h1> Retrieve Order: </h1>
+<form>
+	userId:<input type="number" name="userId5" id="userId5"/>
+	
+	<input type="button" id="btn5" class="btn5" value="Submit"></>
+
+</form>
+<div id="result5" style="height:100px"></div>
+</body>
+</html>

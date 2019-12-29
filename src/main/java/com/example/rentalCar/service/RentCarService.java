@@ -15,7 +15,7 @@ public interface RentCarService {
 
 	public ResultBean reserveCar(int userId, String location,String startDate,String endDate,int carId);
 
-	public ResultBean updateOrderInfo(int orderId, String location,String startDate,String endDate, int carId );
+	public ResultBean updateOrder(int orderId, String location,String startDate,String endDate, int carId );
 	
 	public List<Order> getUserOrders(int userId);
 	
